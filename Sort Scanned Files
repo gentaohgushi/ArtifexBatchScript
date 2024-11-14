@@ -1,0 +1,98 @@
+@echo off
+setlocal enabledelayedexpansion
+set source="C:\Users\Artifex Wines\Dropbox\Production Files\Admin\SCANS EN ROUTE"
+set base_destination="C:\Users\Artifex Wines\Dropbox"
+
+rem Define client code to client name mappings
+set "AQ=Aquilini"
+set "A=Armstrong"
+set "BB=Brook & Bull"
+set "QU=Canvasback"
+set "DA=DaMa"
+set "CL=Holmes Family Winery"
+set "IC=Involuntary Commitment"
+set "L=L'Ecole No.41"
+set "J=R. R. Poet"
+set "R=Rivaura"
+set "S=SMAK"
+set "V=Vital"
+
+for %%f in ("%source%\*") do (
+    set "filename=%%~nxf"
+    set "extension=%%~xf"
+
+    rem Skip empty files
+    if "!filename!"=="" goto continue
+
+    rem Parse the filename to extract date, client code, action type, and remaining part
+    for /f "tokens=1,2,3* delims=- " %%a in ("%%~nxf") do (
+        set "date=%%a"
+        set "clientcode=%%b"
+        set "actiontype=%%c"
+        set "remaining=%%d"
+    )
+
+    rem Initialize lotcode as empty and attempt to extract it from remaining tokens
+    set "lotcode="
+    for %%g in (!remaining!) do (
+        rem If lotcode is empty and the token starts with the client code, set it as lotcode
+        if "!lotcode!"=="" if "!%%g:~0,2!"=="!clientcode!" (
+            set "lotcode=%%g"
+        )
+    )
+
+    rem Extract the vintage (first two characters of the lotcode)
+    set "vintage=!lotcode:~0,2!"
+
+    rem Convert vintage to full year (e.g., "24" becomes "2024")
+    set /a "full_year=20!vintage!"
+
+    rem Look up client name from client code
+    call set "clientname=%%%clientcode%%%"
+    
+    rem Define the parent destination directory based on client name
+    set "client_dir=%base_destination%\!clientname!"
+
+    rem Define directory paths based on action type
+    set "analysis_dir=!client_dir!\02_Completed Work Orders\Analysis WO's Completed\!full_year!"
+    set "cellar_dir=!client_dir!\02_Completed Work Orders\!full_year! Vintage\Cellar WO Completed - !full_year!"
+
+    rem Check if action type is LAB or ANALYSIS
+    if /i "!actiontype!"=="LAB" (
+        rem Create the target directory for LAB if it doesn't exist
+        if not exist "!analysis_dir!" (
+            mkdir "!analysis_dir!"
+        )
+        rem Move the file to the LAB target directory
+        move "%%f" "!analysis_dir!\"
+    ) 
+    if /i "!actiontype!"=="ANALYSIS" (
+        rem Create the target directory for ANALYSIS if it doesn't exist
+        if not exist "!analysis_dir!" (
+            mkdir "!analysis_dir!"
+        )
+        rem Move the file to the ANALYSIS target directory
+        move "%%f" "!analysis_dir!\"
+    ) 
+    rem Handle all other action types
+    set "valid_actiontypes=CRUSH ADD ADDS KMBS TRANSFER BLEND R&R RACK BBL FILL BBL RACKING STIRRING SAMPLE VOL VOLUME PRESS CUSTOM INOC DRAIN"
+    for %%a in (%valid_actiontypes%) do (
+        if /i "!actiontype!"=="%%a" (
+            rem Create the target directory for the shared action types if it doesn't exist
+            if not exist "!cellar_dir!" (
+                mkdir "!cellar_dir!"
+            )
+            rem Move the file to the shared action types directory
+            move "%%f" "!cellar_dir!\"
+        )
+    )
+
+    rem Skip unsupported action types
+    :continue
+)
+
+endlocal
+echo All applicable files have been sorted and moved!
+pause
+
+
