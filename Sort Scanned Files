@@ -1,7 +1,7 @@
 @echo off
 setlocal enabledelayedexpansion
-set source="C:\Users\Artifex Wines\Dropbox\Production Files\Admin\SCANS EN ROUTE"
-set base_destination="C:\Users\Artifex Wines\Dropbox"
+set "source=C:\Users\Artifex Wines\Dropbox\Production Files\Admin\SCANS EN ROUTE"
+set "base_destination=C:\Users\Artifex Wines\Dropbox"
 
 rem Define client code to client name mappings
 set "AQ=Aquilini"
@@ -17,7 +17,9 @@ set "R=Rivaura"
 set "S=SMAK"
 set "V=Vital"
 
-for %%f in ("%source%\*") do (
+cd "%source%"
+
+for %%f in (*.*) do (
     set "filename=%%~nxf"
     set "extension=%%~xf"
 
